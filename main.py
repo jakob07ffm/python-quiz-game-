@@ -1,7 +1,8 @@
 import random
 import time
 
-# Question bank categorized by difficulty levels and topics
+high_score = 0
+
 question_bank = {
     "General Knowledge": {
         "easy": [
@@ -93,22 +94,46 @@ question_bank = {
     }
 }
 
-def start_quiz():
-    high_score = 0
-    print("Welcome to the Advanced Quiz Game!")
-    print("Choose a category:")
+def select_category():
     categories = list(question_bank.keys())
     for i, category in enumerate(categories):
         print(f"{i + 1}) {category}")
-    category_choice = int(input("Enter the number of your choice: ")) - 1
-    selected_category = categories[category_choice]
-    
-    print("Choose a difficulty level:")
+    return categories[int(input("Enter the number of your choice: ")) - 1]
+
+def select_difficulty():
     difficulties = ["easy", "medium", "hard"]
     for i, level in enumerate(difficulties):
         print(f"{i + 1}) {level.capitalize()}")
-    difficulty_choice = int(input("Enter the number of your choice: ")) - 1
-    selected_difficulty = difficulties[difficulty_choice]
+    return difficulties[int(input("Enter the number of your choice: ")) - 1]
+
+def use_lifeline(lifelines, question_data):
+    if lifelines["50-50"] or lifelines["Hint"]:
+        print("Available lifelines:")
+        if lifelines["50-50"]:
+            print("1) 50-50 (remove two incorrect answers)")
+        if lifelines["Hint"]:
+            print("2) Hint")
+        if input("Would you like to use a lifeline? (Y/N): ").upper() == "Y":
+            lifeline_choice = int(input("Enter 1 for 50-50 or 2 for Hint: "))
+            if lifeline_choice == 1 and lifelines["50-50"]:
+                correct_option = question_data['answer']
+                incorrect_options = [opt for opt in question_data['options'] if opt[0] != correct_option]
+                options_to_remove = random.sample(incorrect_options, 2)
+                print("Remaining options:")
+                print(correct_option)
+                for option in question_data['options']:
+                    if option not in options_to_remove and option != correct_option:
+                        print(option)
+                lifelines["50-50"] = False
+            elif lifeline_choice == 2 and lifelines["Hint"]:
+                print(f"Hint: {question_data['hint']}")
+                lifelines["Hint"] = False
+
+def start_quiz():
+    global high_score
+    print("Welcome to the Advanced Quiz Game!")
+    selected_category = select_category()
+    selected_difficulty = select_difficulty()
     
     questions = question_bank[selected_category][selected_difficulty]
     random.shuffle(questions)
@@ -121,28 +146,7 @@ def start_quiz():
         for option in question_data['options']:
             print(option)
         
-        if lifelines["50-50"] or lifelines["Hint"]:
-            print("Available lifelines:")
-            if lifelines["50-50"]:
-                print("1) 50-50 (remove two incorrect answers)")
-            if lifelines["Hint"]:
-                print("2) Hint")
-            use_lifeline = input("Would you like to use a lifeline? (Y/N): ").upper()
-            if use_lifeline == "Y":
-                lifeline_choice = int(input("Enter 1 for 50-50 or 2 for Hint: "))
-                if lifeline_choice == 1 and lifelines["50-50"]:
-                    correct_option = question_data['answer']
-                    incorrect_options = [opt for opt in question_data['options'] if opt[0] != correct_option]
-                    options_to_remove = random.sample(incorrect_options, 2)
-                    print("Remaining options:")
-                    print(correct_option)
-                    for option in question_data['options']:
-                        if option not in options_to_remove and option != correct_option:
-                            print(option)
-                    lifelines["50-50"] = False
-                elif lifeline_choice == 2 and lifelines["Hint"]:
-                    print(f"Hint: {question_data['hint']}")
-                    lifelines["Hint"] = False
+        use_lifeline(lifelines, question_data)
         
         start_time = time.time()
         answer = input("Your answer (A/B/C/D): ").upper()
