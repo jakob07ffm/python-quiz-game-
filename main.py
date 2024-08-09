@@ -129,19 +129,32 @@ def use_lifeline(lifelines, question_data):
                 print(f"Hint: {question_data['hint']}")
                 lifelines["Hint"] = False
 
+def calculate_score(start_time, end_time, difficulty_level):
+    time_taken = end_time - start_time
+    base_score = 10 if difficulty_level == "easy" else 20 if difficulty_level == "medium" else 30
+    time_bonus = max(0, int((10 - time_taken) * 2))
+    return base_score + time_bonus
+
+def adaptive_question_selection(category, score):
+    if score < 2:
+        return question_bank[category]["easy"]
+    elif score < 4:
+        return question_bank[category]["medium"]
+    else:
+        return question_bank[category]["hard"]
+
 def start_quiz():
     global high_score
     print("Welcome to the Advanced Quiz Game!")
     selected_category = select_category()
-    selected_difficulty = select_difficulty()
-    
-    questions = question_bank[selected_category][selected_difficulty]
-    random.shuffle(questions)
-    
     score = 0
     lifelines = {"50-50": True, "Hint": True}
-    
-    for question_data in questions:
+
+    for round_number in range(5):
+        selected_difficulty = adaptive_question_selection(selected_category, score)
+        question_data = random.choice(selected_difficulty)
+        
+        print(f"Round {round_number + 1}:")
         print(f"Question: {question_data['question']}")
         for option in question_data['options']:
             print(option)
@@ -156,16 +169,16 @@ def start_quiz():
             print("Time's up! You didn't answer in time.")
         elif answer == question_data['answer']:
             print("Correct!")
-            score += 1
+            score += calculate_score(start_time, end_time, selected_difficulty[0])
         else:
             print("Incorrect.")
         print(f"The correct answer was: {question_data['answer']}\n")
     
+    print(f"Your final score: {score}")
     if score > high_score:
         high_score = score
-        print(f"New high score: {high_score}")
+        print(f"Congratulations! You set a new high score: {high_score}")
     else:
-        print(f"Your score: {score}")
-    print(f"High score: {high_score}")
+        print(f"High score remains: {high_score}")
 
 start_quiz()
